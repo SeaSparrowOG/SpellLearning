@@ -1,0 +1,21 @@
+{
+  "name": "spell-learning",
+  "version-string": "1.0.0",
+  "description": "SKSE-based mod that changes how spells are learnt by the player in-game.",
+  "homepage": "",
+  "license": "MIT",
+  "dependencies": [
+    "rsm-binary-io",
+    "spdlog",
+    "clib-util",
+    "jsoncpp",
+    "xbyak"
+  ],
+  "overrides": [
+    {
+      "name": "fmt",
+      "version": "9.1.0"
+    }
+  ],
+  "builtin-baseline": "b7dba7f9aad09a56900f21cd78cfda1258e54e38"
+}
