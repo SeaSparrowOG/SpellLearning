@@ -1,15 +1,31 @@
 #pragma once
 
 namespace Hooks {
-    struct ReadBook {
+    struct ReadBookContainer {
 
-        static bool thunk(RE::TESObjectBOOK* a_book, RE::SpellItem* a_spell);
+        static bool thunk(RE::TESObjectBOOK* a1, RE::PlayerCharacter* a2);
 
         static void Install();
 
-        static inline REL::Relocation<decltype(thunk)> _ReadBookReference;
-        static inline REL::Relocation<decltype(thunk)> _ReadBookInventory;
-        static inline REL::Relocation<decltype(thunk)> _ReadBookContainer;
+        static inline REL::Relocation<decltype(thunk)> func;
+    };
+
+    struct ReadBookInventory {
+
+        static bool thunk(RE::TESObjectBOOK* a1, RE::PlayerCharacter* a2);
+
+        static void Install();
+
+        static inline REL::Relocation<decltype(thunk)> func;
+    };
+
+    struct ReadBookReference {
+
+        static bool thunk(RE::TESObjectBOOK* a1, RE::PlayerCharacter* a2);
+
+        static void Install();
+
+        static inline REL::Relocation<decltype(thunk)> func;
     };
 
 	void Install();

@@ -2,58 +2,103 @@
 
 #include "xbyak/xbyak.h"
 
+namespace {
+
+    bool inline EvaluateBook(RE::TESObjectBOOK* a_book, RE::PlayerCharacter* a_player) {
+        _loggerDebug("  Evaluating book: {}", _debugEDID(a_book));
+        if (!a_book || !a_player) return false;
+
+        if (a_book->TeachesSpell()) {
+            auto* bookSpell = a_book->GetSpell();
+            _loggerDebug("    >Teaches spell: {}", _debugEDID(bookSpell));
+            if (a_player->HasSpell(bookSpell)) return false;
+        }
+        else if (a_book->TeachesSkill()) {
+            auto bookSkill = a_book->GetSkill();
+            if (bookSkill == RE::ActorValue::kIllusion) {
+
+            }
+            else if (bookSkill == RE::ActorValue::kConjuration) {
+
+            }
+            else if (bookSkill == RE::ActorValue::kDestruction) {
+
+            }
+            else if (bookSkill == RE::ActorValue::kRestoration) {
+
+            }
+            else if (bookSkill == RE::ActorValue::kAlteration) {
+
+            }
+            _loggerDebug("  >Levels skill: {}", bookSkill);
+
+            return false;
+        }
+        else {
+            return false;
+        }
+        return true;
+    }
+}
+
 namespace Hooks {
-	bool ReadBook::thunk(RE::TESObjectBOOK* a_book, RE::SpellItem* a_spell)
-	{
-		_loggerDebug("Reference hook");
-		if (a_book && a_book->TeachesSpell()) {
-			auto* bookSpell = a_book->GetSpell();
-			_loggerDebug("Player attempted to learn {}", _debugEDID(bookSpell));
-		}
-		else if (a_book && a_book->TeachesSkill()) {
-			_loggerDebug("Player attempted to level {}", a_book->GetSkill());
-		}
-	}
 
-	void ReadBook::Install()
-	{
-		struct Patch : public Xbyak::CodeGenerator
-		{
-			Patch(std::uintptr_t a_funcAddr)
-			{
-				Xbyak::Label hookAddr;
-				L(hookAddr);
+    bool ReadBookReference::thunk(RE::TESObjectBOOK* a1, RE::PlayerCharacter* a2)
+    {
+        _loggerInfo("Hook: Read from world");
+        if (EvaluateBook(a1, a2)) {
+            return true;
+        }
+        else {
+            return func(a1, a2);
+        }
+    }
 
-				mov(rcx, r15);
-				mov(rax, a_funcAddr);
-				call(rax);
-				mov(rsi, 0);
+    void ReadBookReference::Install()
+    {
+        REL::Relocation<std::uintptr_t> target{ REL::ID(51053), 0x231 };
+        stl::write_thunk_call<ReadBookReference>(target.address());
+    }
 
-				jmp(hookAddr.getAddress() + 0x6E);
-			}
-		};
+    bool ReadBookInventory::thunk(RE::TESObjectBOOK* a1, RE::PlayerCharacter* a2)
+    {
+        _loggerInfo("Hook: Read from Inventory");
+        if (EvaluateBook(a1, a2)) {
+            return true;
+        }
+        else {
+            return func(a1, a2);
+        }
+    }
 
-		std::uintptr_t hookAddr = REL::ID(17842).address() + 0x11D;
-		auto pattern = REL::make_pattern<"48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ??">();
-		if (!pattern.match(hookAddr)) {
-			SKSE::stl::report_and_fail("Binary did not match expected, failed to install"sv);
-		}
+    void ReadBookInventory::Install()
+    {
+        REL::Relocation<std::uintptr_t> target{ REL::ID(51870), 0x1A7 };
+        stl::write_thunk_call<ReadBookInventory>(target.address());
+    }
 
-		std::uintptr_t funcAddr = reinterpret_cast<std::uintptr_t>(thunk);
-		Patch patch{ funcAddr };
-		patch.ready();
+    bool ReadBookContainer::thunk(RE::TESObjectBOOK* a1, RE::PlayerCharacter* a2)
+    {
+        _loggerInfo("Hook: Read from container");
+        if (EvaluateBook(a1, a2)) {
+            return true;
+        }
+        else {
+            return func(a1, a2);
+        }
+    }
 
-		if (patch.getSize() > 0x56) {
-			SKSE::stl::report_and_fail("Patch was too large, failed to install"sv);
-		}
-
-		REL::safe_fill(hookAddr, REL::NOP, 0x56);
-		REL::safe_write(hookAddr, patch.getCode(), patch.getSize());
-	}
+    void ReadBookContainer::Install()
+    {
+        REL::Relocation<std::uintptr_t> target{ REL::ID(51149), 0x18E };
+        stl::write_thunk_call<ReadBookContainer>(target.address());
+    }
 
 	void Install()
 	{
-		ReadBook::Install();
+        ReadBookReference::Install();
+        ReadBookInventory::Install();
+        ReadBookContainer::Install();
 		_loggerInfo("Finished installing hooks.");
 	}
 }
